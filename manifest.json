@@ -1,12 +1,35 @@
 {
-  "id": "template",
-  "name": "模板",
-  "version": "1.0.0",
-  "description": "假数据示例模块，不访问网络",
+  "id": "ikanbot",
+  "name": "爱看机器人",
+  "version": "1.0.2",
+  "description": "爱看机器人（ikanbot）——全网聚合搜索式影视源，多线路可切换",
   "runtime": "js",
   "api": 1,
   "adult": false,
-  "hosts": [],
-  "capabilities": ["search"],
-  "allowEmptyCatalog": true
+  "baseUrl": "https://movie.douban.com",
+  "noHostRotation": true,
+  "hosts": [
+    "ikanbot.com",
+    "www.ikanbot.com",
+    "www1.ikanbot.com",
+    "doubanio.com",
+    "*.doubanio.com",
+    "taopianimage1.com",
+    "*.taopianimage1.com",
+    "play.xluuss.com",
+    "v.gsuus.com",
+    "vv.jisuzyv.com",
+    "v.fengbao14.com",
+    "vodcnd16.0jtv2.com"
+  ],
+  "hostSuffixes": [
+    "ikanbot.com",
+    "gsuus.com",
+    "xluuss.com",
+    "jisuzyv.com",
+    "fengbao14.com",
+    "doubanio.com",
+    "taopianimage1.com"
+  ],
+  "capabilities": ["search"]
 }
