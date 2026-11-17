@@ -87,7 +87,7 @@ function fixUrl(raw) {
   if (!value) return "";
   if (value.indexOf("//") === 0) value = "https:" + value;
   if (value.indexOf("http") !== 0) return "";
-  return value;
+  return value.replace(/^(https?:\/\/)img9\.doubanio\.com\//i, "$1img3.doubanio.com/");
 }
 
 function numericId(value) {
