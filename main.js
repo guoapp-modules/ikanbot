@@ -2,7 +2,7 @@
 // 从 guoappxp 的 ikanbot.go 移植：搜索式聚合站，线路接口需 current_id + e_token 签名。
 // 运行环境是 goja：所有导出函数同步，访问网络只能走 host.*，域名需在 manifest.hosts。
 
-const BASE = "https://www1.ikanbot.com";
+const BASE = "https://www.ikanbot.com";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 const PAGE_SIZE = 36;
 const MAX_LINES = 40;
@@ -113,13 +113,32 @@ function kindOf(category) {
   return String(category || "").indexOf("movie-") === 0 ? "电影" : "剧集";
 }
 
+// Cloudflare 托管质询规避（2026-11 实测）：
+// 站点对「详情页 /play/{id} + 同源 Referer」返回 "Just a moment..." 质询页，
+// 导致拿不到 current_id / e_token，线路接口随即 -401、无法播放。
+// 规律：无 Referer / 外部 Referer 放行；同源 Referer 被挑战。浏览器 UA 是前提（已是 UA）。
+// 处理：详情页直接用外部 Referer；任意页若仍拿到质询页，用外部 Referer + noCache 重试一次。
+var SAFE_REFERER = "https://www.google.com/";
+
+function looksLikeChallenge(body) {
+  var head = String(body == null ? "" : body).slice(0, 4000);
+  return /Just a moment|cf-challenge|challenge-platform|Attention Required|Checking your browser|cf-turnstile/i.test(head);
+}
+
+function fetchTextSafe(full, ref) {
+  var response = host.fetchText({ url: full, referer: ref, userAgent: UA });
+  if (looksLikeChallenge(response.body)) {
+    // 被质询：换外部 Referer 重试一次
+    response = host.fetchText({ url: full, referer: SAFE_REFERER, userAgent: UA, noCache: true });
+  }
+  return response;
+}
+
 function getPage(url, referer) {
   var full = String(url).indexOf("http") === 0 ? url : BASE + url;
-  var response = host.fetchText({
-    url: full,
-    referer: referer || BASE + "/",
-    userAgent: UA,
-  });
+  // 详情页禁用同源 Referer（这是触发 CF 质询的根因），其它页按原样
+  var ref = /\/play\//.test(full) ? SAFE_REFERER : (referer || BASE + "/");
+  var response = fetchTextSafe(full, ref);
   return { body: response.body, url: response.url || full, root: host.parseHtml(response.body) };
 }
 
