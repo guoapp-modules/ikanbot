@@ -117,28 +117,13 @@ function kindOf(category) {
 // 站点对「详情页 /play/{id} + 同源 Referer」返回 "Just a moment..." 质询页，
 // 导致拿不到 current_id / e_token，线路接口随即 -401、无法播放。
 // 规律：无 Referer / 外部 Referer 放行；同源 Referer 被挑战。浏览器 UA 是前提（已是 UA）。
-// 处理：详情页直接用外部 Referer；任意页若仍拿到质询页，用外部 Referer + noCache 重试一次。
 var SAFE_REFERER = "https://www.google.com/";
-
-function looksLikeChallenge(body) {
-  var head = String(body == null ? "" : body).slice(0, 4000);
-  return /Just a moment|cf-challenge|challenge-platform|Attention Required|Checking your browser|cf-turnstile/i.test(head);
-}
-
-function fetchTextSafe(full, ref) {
-  var response = host.fetchText({ url: full, referer: ref, userAgent: UA });
-  if (looksLikeChallenge(response.body)) {
-    // 被质询：换外部 Referer 重试一次
-    response = host.fetchText({ url: full, referer: SAFE_REFERER, userAgent: UA, noCache: true });
-  }
-  return response;
-}
 
 function getPage(url, referer) {
   var full = String(url).indexOf("http") === 0 ? url : BASE + url;
   // 详情页禁用同源 Referer（这是触发 CF 质询的根因），其它页按原样
   var ref = /\/play\//.test(full) ? SAFE_REFERER : (referer || BASE + "/");
-  var response = fetchTextSafe(full, ref);
+  var response = host.fetchText({ url: full, referer: ref, userAgent: UA });
   return { body: response.body, url: response.url || full, root: host.parseHtml(response.body) };
 }
 
